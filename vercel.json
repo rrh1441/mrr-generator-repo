@@ -1,36 +1,30 @@
 {
   "functions": {
-    // Tells Vercel that api/index.ts is a Node serverless function
     "api/index.ts": {
       "runtime": "nodejs18.x"
     }
   },
   "builds": [
     {
-      // All files in /api get treated as Node functions
       "src": "api/**",
       "use": "@vercel/node"
     },
     {
-      // Tells Vercel to run "npm run build" (your Vite build) for the rest
       "src": "package.json",
       "use": "@vercel/static-build"
     }
   ],
   "routes": [
     {
-      // Any request to /api/... goes to the Node function in /api
       "src": "/api/(.*)",
       "dest": "api/index.ts"
     },
     {
-      // Anything else is served as your static front-end from dist
       "src": "/(.*)",
       "dest": "/index.html"
     }
   ],
   "staticBuild": {
-    // Tells Vercel that your final Vite output is in "dist"
     "distDir": "dist"
   }
 }
