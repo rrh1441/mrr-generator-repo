@@ -57,6 +57,7 @@ const ResultCard: React.FC<ResultCardProps> = ({ idea, onReset }) => {
       {renderSection("Monetization Strategy", idea.monetization)}
       {renderSection("Challenges and Risks", idea.challengesAndRisks)}
       {renderSection("Why Now", idea.whyNow)}
+      {renderSection("How to Build It", idea.howToBuild)}
       
       <div className="mt-10 pt-6 border-t border-border/50 flex justify-end space-x-4">
         <button 
