@@ -1,8 +1,7 @@
-
-import React, { useState } from 'react';
-import { BusinessIdeaParams, generateBusinessIdea, BusinessIdea } from '../lib/business-ideas';
-import Loader from './Loader';
-import ResultCard from './ResultCard';
+import React, { useState } from 'react'
+import { BusinessIdeaParams, BusinessIdea, fetchBusinessIdea } from '@/lib/business-ideas'
+import Loader from './Loader'
+import ResultCard from './ResultCard'
 
 const BusinessIdeaForm: React.FC = () => {
   const [formData, setFormData] = useState<BusinessIdeaParams>({
@@ -11,54 +10,61 @@ const BusinessIdeaForm: React.FC = () => {
     budget: '',
     riskTolerance: 'Medium',
     businessModel: 'SaaS',
-  });
+  })
 
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [businessIdea, setBusinessIdea] = useState<BusinessIdea | null>(null);
-  const [formSubmitted, setFormSubmitted] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [businessIdea, setBusinessIdea] = useState<BusinessIdea | null>(null)
+  const [formSubmitted, setFormSubmitted] = useState(false)
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
-    }));
-  };
+      [name]: value,
+    }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsGenerating(true);
-    setFormSubmitted(true);
-    
+    e.preventDefault()
+    setIsGenerating(true)
+    setFormSubmitted(true)
+    setBusinessIdea(null)
+
     try {
-      const idea = await generateBusinessIdea(formData);
-      setBusinessIdea(idea);
+      const idea = await fetchBusinessIdea(formData)
+      setBusinessIdea(idea)
     } catch (error) {
-      console.error('Error generating business idea:', error);
+      console.error('Failed to fetch business idea:', error)
+      // You could show an error UI here if desired.
     } finally {
-      setIsGenerating(false);
+      setIsGenerating(false)
     }
-  };
+  }
 
   const handleReset = () => {
-    setFormSubmitted(false);
-    setBusinessIdea(null);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+    setFormSubmitted(false)
+    setBusinessIdea(null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
+  // If the user has submitted and we have a final business idea, show the result card
   if (formSubmitted && !isGenerating && businessIdea) {
     return (
       <div className="animate-fade-in">
         <ResultCard idea={businessIdea} onReset={handleReset} />
       </div>
-    );
+    )
   }
 
   return (
     <div className="w-full max-w-2xl mx-auto glass-panel rounded-xl p-8 animate-slide-up">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="form-input-wrapper">
-          <label htmlFor="skills" className="form-label">What skills do you have?</label>
+          <label htmlFor="skills" className="form-label">
+            What skills do you have?
+          </label>
           <textarea
             id="skills"
             name="skills"
@@ -69,9 +75,11 @@ const BusinessIdeaForm: React.FC = () => {
             required
           />
         </div>
-        
+
         <div className="form-input-wrapper">
-          <label htmlFor="interests" className="form-label">What are your interests and passions?</label>
+          <label htmlFor="interests" className="form-label">
+            What are your interests and passions?
+          </label>
           <textarea
             id="interests"
             name="interests"
@@ -82,9 +90,11 @@ const BusinessIdeaForm: React.FC = () => {
             required
           />
         </div>
-        
+
         <div className="form-input-wrapper">
-          <label htmlFor="budget" className="form-label">What's your starting budget?</label>
+          <label htmlFor="budget" className="form-label">
+            What's your starting budget?
+          </label>
           <input
             type="text"
             id="budget"
@@ -96,10 +106,12 @@ const BusinessIdeaForm: React.FC = () => {
             required
           />
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="form-input-wrapper">
-            <label htmlFor="riskTolerance" className="form-label">Risk Tolerance</label>
+            <label htmlFor="riskTolerance" className="form-label">
+              Risk Tolerance
+            </label>
             <select
               id="riskTolerance"
               name="riskTolerance"
@@ -113,9 +125,11 @@ const BusinessIdeaForm: React.FC = () => {
               <option value="High">High</option>
             </select>
           </div>
-          
+
           <div className="form-input-wrapper">
-            <label htmlFor="businessModel" className="form-label">Preferred Business Model</label>
+            <label htmlFor="businessModel" className="form-label">
+              Preferred Business Model
+            </label>
             <select
               id="businessModel"
               name="businessModel"
@@ -134,18 +148,14 @@ const BusinessIdeaForm: React.FC = () => {
             </select>
           </div>
         </div>
-        
+
         <div className="pt-4">
-          <button 
-            type="submit" 
-            className="primary-button w-full" 
-            disabled={isGenerating}
-          >
+          <button type="submit" className="primary-button w-full" disabled={isGenerating}>
             {isGenerating ? 'Generating Idea...' : 'Generate Business Idea'}
           </button>
         </div>
       </form>
-      
+
       {isGenerating && (
         <div className="mt-8">
           <Loader size="md" />
@@ -155,7 +165,7 @@ const BusinessIdeaForm: React.FC = () => {
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default BusinessIdeaForm;
+export default BusinessIdeaForm
