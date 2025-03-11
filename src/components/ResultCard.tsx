@@ -1,122 +1,87 @@
-import { Configuration, OpenAIApi } from "openai";
+import React, { useEffect, useRef } from 'react';
+import { BusinessIdea } from '../lib/business-ideas';
 
-interface BusinessIdeaRequestBody {
-  skills: string;
-  interests: string;
-  budget: string;
-  riskTolerance: "Low" | "Medium" | "High";
-  businessModel:
-    | "SaaS"
-    | "Marketplace"
-    | "E-commerce"
-    | "Services"
-    | "Content"
-    | "Mobile App"
-    | "Other";
+interface ResultCardProps {
+  idea: BusinessIdea;
+  onReset: () => void;
 }
 
-export default async function handler(req: any, res: any) {
-  try {
-    // Only allow POST
-    if (req.method !== "POST") {
-      return res.status(405).json({ error: "Method Not Allowed" });
-    }
+const ResultCard: React.FC<ResultCardProps> = ({ idea, onReset }) => {
+  const cardRef = useRef<HTMLDivElement>(null);
 
-    // Retrieve the OpenAI key from environment variables
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ error: "Missing OPENAI_API_KEY" });
-    }
-
-    // Destructure form data
-    const { skills, interests, budget, riskTolerance, businessModel } =
-      req.body as BusinessIdeaRequestBody;
-
-    // Configure openai@3.3.0 with named imports
-    const configuration = new Configuration({ apiKey });
-    const openaiClient = new OpenAIApi(configuration);
-
-    /**
-     * Revised system instruction: produce "howToBuild" and "aiPrompt" as separate strings.
-     * "aiPrompt" must reflect best practices for iterative dev, security, testing, etc.
-     */
-    const systemInstruction = `
-You are a highly experienced software architect and business consultant. 
-Return exactly one JSON object with these fields:
-
-{
-  "name": string,
-  "problem": string,
-  "solution": string,
-  "targetAudience": string,
-  "businessModel": string,
-  "techStack": string,
-  "monetization": string,
-  "challengesAndRisks": string,
-  "whyNow": string,
-  "howToBuild": string,
-  "aiPrompt": string
-}
-
-Constraints:
-1) "howToBuild": a concise string describing the recommended approach, libraries, environment setup, etc.
-2) "aiPrompt": a best-practice-based advanced prompt for ChatGPT or other AI. 
-   - Emphasize an iterative dev approach, version control, environment variables, security, performance, testing, etc.
-   - Provide just enough detail to help a developer jumpstart coding. 
-3) Do not add extra fields or commentary beyond these. 
-4) Output only valid JSON in the final message, no additional text.
-    `.trim();
-
-    const userPrompt = `
-Skills: ${skills}
-Interests: ${interests}
-Budget: ${budget}
-Risk Tolerance: ${riskTolerance}
-Preferred Business Model: ${businessModel}
-
-Return a single JSON object with "howToBuild" and "aiPrompt" as separate string fields. 
-They must incorporate strong best practices for building the recommended project.
-    `.trim();
-
-    // Make the request to ChatGPT
-    const response = await openaiClient.createChatCompletion({
-      model: "gpt-3.5-turbo",
-      temperature: 0.7,
-      messages: [
-        { role: "system", content: systemInstruction },
-        { role: "user", content: userPrompt },
-      ],
+  // Animate sections in sequence
+  useEffect(() => {
+    const sections = cardRef.current?.querySelectorAll('.result-section');
+    sections?.forEach((section, index) => {
+      setTimeout(() => {
+        section.classList.add('animate-slide-up');
+        section.classList.remove('opacity-0');
+      }, 100 * index);
     });
+  }, []);
 
-    // Grab the text from the completion
-    const rawText = response.data.choices?.[0]?.message?.content?.trim() || "";
+  const renderSection = (title: string, content: string) => (
+    <div className="result-section opacity-0 transition-all duration-500 mb-6">
+      <h3 className="text-sm uppercase tracking-widest text-muted-foreground mb-1">{title}</h3>
+      <p className="text-foreground">{content}</p>
+    </div>
+  );
 
-    let idea;
-    try {
-      idea = JSON.parse(rawText);
-    } catch (error) {
-      console.error("Failed to parse GPT response:", error);
-      console.error("Raw content:", rawText);
-      // If JSON parse fails, provide fallback
-      return res.status(200).json({
-        name: "Error Parsing Idea",
-        problem: "Could not parse AI output.",
-        solution: "Check logs for raw JSON string.",
-        targetAudience: "N/A",
-        businessModel: "N/A",
-        techStack: "N/A",
-        monetization: "N/A",
-        challengesAndRisks: "N/A",
-        whyNow: "N/A",
-        howToBuild: "N/A",
-        aiPrompt: "N/A",
-      });
-    }
+  return (
+    <div 
+      ref={cardRef}
+      className="w-full max-w-3xl mx-auto glass-panel rounded-xl p-8 shadow-lg border-t border-white/40"
+    >
+      <div className="flex justify-between items-center mb-8">
+        <div className="inline-block">
+          <span className="subtle-chip">Your Business Idea</span>
+        </div>
+        <button 
+          onClick={onReset}
+          className="secondary-button text-sm px-4 py-1.5"
+        >
+          Generate New Idea
+        </button>
+      </div>
+      
+      <div className="result-section opacity-0 transition-all duration-500 mb-8">
+        <h2 className="text-3xl font-bold mb-2">{idea.name}</h2>
+      </div>
+      
+      {renderSection("Problem It Solves", idea.problem)}
+      {renderSection("Solution and How It Works", idea.solution)}
+      {renderSection("Target Audience", idea.targetAudience)}
+      {renderSection("Business Model", idea.businessModel)}
+      {renderSection("Tech Stack Recommendation", idea.techStack)}
+      {renderSection("Monetization Strategy", idea.monetization)}
+      {renderSection("Challenges and Risks", idea.challengesAndRisks)}
+      {renderSection("Why Now", idea.whyNow)}
+      {renderSection("How to Build It", idea.howToBuild)}
+      {renderSection("AI Prompt", idea.aiPrompt)}
+      
+      <div className="mt-10 pt-6 border-t border-border/50 flex justify-end space-x-4">
+        <button 
+          onClick={() => {
+            navigator.clipboard.writeText(
+              Object.entries(idea)
+                .map(([key, value]) => `${key}: ${value}`)
+                .join('\n\n')
+            );
+            alert('Business idea copied to clipboard!');
+          }}
+          className="secondary-button text-sm"
+        >
+          Copy to Clipboard
+        </button>
+        <button 
+          onClick={onReset}
+          className="primary-button"
+        >
+          Generate Another Idea
+        </button>
+      </div>
+    </div>
+  );
+};
 
-    // Return the final structured idea
-    return res.status(200).json(idea);
-  } catch (error) {
-    console.error("OpenAI call error:", error);
-    return res.status(500).json({ error: "OpenAI request failed" });
-  }
-}
+export default ResultCard;

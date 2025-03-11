@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
-import { BusinessIdeaParams, BusinessIdea, fetchBusinessIdea } from '@/lib/business-ideas'
-import Loader from './Loader'
-import ResultCard from './ResultCard'
+import React, { useState } from 'react';
+import { BusinessIdeaParams, BusinessIdea, fetchBusinessIdea } from '@/lib/business-ideas';
+import Loader from './Loader';
+import ResultCard from './ResultCard';
 
 const BusinessIdeaForm: React.FC = () => {
   const [formData, setFormData] = useState<BusinessIdeaParams>({
@@ -10,53 +10,53 @@ const BusinessIdeaForm: React.FC = () => {
     budget: '',
     riskTolerance: 'Medium',
     businessModel: 'SaaS',
-  })
+  });
 
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [businessIdea, setBusinessIdea] = useState<BusinessIdea | null>(null)
-  const [formSubmitted, setFormSubmitted] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [businessIdea, setBusinessIdea] = useState<BusinessIdea | null>(null);
+  const [formSubmitted, setFormSubmitted] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-    }))
-  }
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsGenerating(true)
-    setFormSubmitted(true)
-    setBusinessIdea(null)
+    e.preventDefault();
+    setIsGenerating(true);
+    setFormSubmitted(true);
+    setBusinessIdea(null);
 
     try {
       // Calls the serverless route via fetchBusinessIdea(), which references /api/generate-idea
-      const idea = await fetchBusinessIdea(formData)
-      setBusinessIdea(idea)
+      const idea = await fetchBusinessIdea(formData);
+      setBusinessIdea(idea);
     } catch (error) {
-      console.error('Failed to fetch business idea:', error)
-      // You could show an error UI here if desired.
+      console.error('Failed to fetch business idea:', error);
+      // Optionally display an error UI here.
     } finally {
-      setIsGenerating(false)
+      setIsGenerating(false);
     }
-  }
+  };
 
   const handleReset = () => {
-    setFormSubmitted(false)
-    setBusinessIdea(null)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
+    setFormSubmitted(false);
+    setBusinessIdea(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
-  // If the user has submitted and we have a final business idea, show the result card
+  // If a final business idea is ready, show the result card
   if (formSubmitted && !isGenerating && businessIdea) {
     return (
       <div className="animate-fade-in">
         <ResultCard idea={businessIdea} onReset={handleReset} />
       </div>
-    )
+    );
   }
 
   return (
@@ -166,7 +166,7 @@ const BusinessIdeaForm: React.FC = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default BusinessIdeaForm
+export default BusinessIdeaForm;
