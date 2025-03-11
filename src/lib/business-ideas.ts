@@ -1,51 +1,66 @@
 /**
- * This file no longer calls OpenAI directly. Instead, it just declares
- * types and a helper function to call your new `/api` endpoint.
+ * src/lib/business-ideas.ts
+ * 
+ * This file defines your front-end helper for calling the new `/api/generate-idea` 
+ * serverless function (which safely hides your OPENAI_API_KEY).
  */
 
 /**
- * The shape of the form data.
+ * The shape of the user form data your front end collects
  */
 export type BusinessIdeaParams = {
-  skills: string
-  interests: string
-  budget: string
-  riskTolerance: 'Low' | 'Medium' | 'High'
-  businessModel: 'SaaS' | 'Marketplace' | 'E-commerce' | 'Services' | 'Content' | 'Mobile App' | 'Other'
-}
+  skills: string;
+  interests: string;
+  budget: string;
+  riskTolerance: "Low" | "Medium" | "High";
+  businessModel:
+    | "SaaS"
+    | "Marketplace"
+    | "E-commerce"
+    | "Services"
+    | "Content"
+    | "Mobile App"
+    | "Other";
+};
 
 /**
- * The shape of the final business idea object returned by ChatGPT.
+ * The final shape of the JSON your serverless route returns
  */
 export type BusinessIdea = {
-  name: string
-  problem: string
-  solution: string
-  targetAudience: string
-  businessModel: string
-  techStack: string
-  monetization: string
-  challengesAndRisks: string
-  whyNow: string
-  howToBuild: string
-}
+  name: string;
+  problem: string;
+  solution: string;
+  targetAudience: string;
+  businessModel: string;
+  techStack: string;
+  monetization: string;
+  challengesAndRisks: string;
+  whyNow: string;
+  howToBuild: string;
+  aiPrompt: string;
+};
 
 /**
- * Makes a POST request to the serverless API route at /api.
- * The serverless function (api/index.ts) calls OpenAI securely
- * so your key isn't exposed in the browser.
+ * Calls the new /api/generate-idea route with form data. 
+ * The route does all the OpenAI logic, returning a BusinessIdea object.
  */
-export async function fetchBusinessIdea(params: BusinessIdeaParams): Promise<BusinessIdea> {
-  const response = await fetch('/api', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+export async function fetchBusinessIdea(
+  params: BusinessIdeaParams
+): Promise<BusinessIdea> {
+  // POST to the new serverless function
+  const response = await fetch("/api/generate-idea", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(params),
-  })
+  });
 
   if (!response.ok) {
-    throw new Error(`API error: ${response.status} ${response.statusText}`)
+    throw new Error(`API error: ${response.status} ${response.statusText}`);
   }
 
-  const data = (await response.json()) as BusinessIdea
-  return data
+  // The serverless route returns the parsed JSON
+  const data = (await response.json()) as BusinessIdea;
+  return data;
 }

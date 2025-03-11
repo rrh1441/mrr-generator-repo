@@ -33,6 +33,7 @@ const BusinessIdeaForm: React.FC = () => {
     setBusinessIdea(null)
 
     try {
+      // Calls the serverless route via fetchBusinessIdea(), which references /api/generate-idea
       const idea = await fetchBusinessIdea(formData)
       setBusinessIdea(idea)
     } catch (error) {
