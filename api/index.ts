@@ -1,5 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { Configuration, OpenAIApi } from 'openai'
+import openaiPkg from 'openai'
+
+const { Configuration, OpenAIApi } = openaiPkg
 
 /**
  * Interface describing the shape of data you expect from the client.
