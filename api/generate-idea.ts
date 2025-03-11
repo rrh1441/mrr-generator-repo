@@ -28,7 +28,7 @@ export default async function handler(req: any, res: any) {
       return res.status(500).json({ error: "Missing OPENAI_API_KEY" });
     }
 
-    // Parse the incoming request body
+    // Destructure incoming request data
     const { skills, interests, budget, riskTolerance, businessModel } =
       req.body as BusinessIdeaRequestBody;
 
@@ -36,17 +36,9 @@ export default async function handler(req: any, res: any) {
     const configuration = new Configuration({ apiKey });
     const openaiClient = new OpenAIApi(configuration);
 
-    // Revised system instruction:
-    // • Return exactly one JSON object with the following fields (note that "techStack" is removed):
-    //   - name, problem, solution, targetAudience, businessModel,
-    //     monetization, challengesAndRisks, whyNow, howToBuild, aiPrompt
-    // • "howToBuild" should be a concise, step-by-step approach that includes guidance on project structure,
-    //   initial configuration, key component suggestions, and deployment considerations.
-    // • "aiPrompt" should be a detailed prompt that instructs an AI (like ChatGPT) to provide additional scaffolding or
-    //   concrete code guidance focusing on iterative development, security, testing, performance optimization, and environment configuration.
-    // • Output only valid JSON, with no extra commentary or keys.
+    // Define system instruction that includes clear guidance for the "aiPrompt" field.
     const systemInstruction = `
-You are a highly experienced software architect and business consultant.
+You are an expert software architect and business consultant.
 Return exactly one JSON object with these fields:
 
 {
@@ -63,10 +55,9 @@ Return exactly one JSON object with these fields:
 }
 
 Constraints:
-1) "howToBuild": Provide a concise, step-by-step approach detailing the recommended implementation strategy, including guidance on project structure, initial configuration, key components, and deployment considerations. Do not include tech stack recommendations.
-2) "aiPrompt": Provide a detailed, best-practices-based prompt for ChatGPT that instructs it to generate additional code scaffolding and concrete implementation advice. Emphasize iterative development, version control, security, performance optimization, testing, and proper environment configuration.
-3) Do not add any extra commentary or fields beyond these.
-Output only a valid JSON object.
+1) "howToBuild": Provide a concise, step-by-step guide outlining the recommended implementation strategy. This should include suggestions for project structure, initial configuration, and deployment considerations.
+2) "aiPrompt": Generate a detailed prompt that a developer can copy and paste into an LLM (like ChatGPT) to receive further code scaffolding and project setup instructions. This prompt must include concrete guidance on setting up version control, configuring environment variables, applying security best practices, writing tests, and planning for iterative development.
+3) Do not include any extra fields or commentary—output only a valid JSON object.
     `.trim();
 
     const userPrompt = `
@@ -76,10 +67,10 @@ Budget: ${budget}
 Risk Tolerance: ${riskTolerance}
 Preferred Business Model: ${businessModel}
 
-Return a single JSON object with "howToBuild" and "aiPrompt" as separate string fields.
+Return a single JSON object with "howToBuild" and "aiPrompt" as separate string fields as described above.
     `.trim();
 
-    // Make the request to ChatGPT
+    // Call ChatGPT
     const response = await openaiClient.createChatCompletion({
       model: "gpt-3.5-turbo",
       temperature: 0.7,
