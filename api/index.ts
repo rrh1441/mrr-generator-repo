@@ -27,21 +27,16 @@ export default async function handler(req: any, res: any) {
       return res.status(500).json({ error: "Missing OPENAI_API_KEY" });
     }
 
-    const {
-      skills,
-      interests,
-      budget,
-      riskTolerance,
-      businessModel,
-    } = req.body as BusinessIdeaRequestBody;
+    const { skills, interests, budget, riskTolerance, businessModel } =
+      req.body as BusinessIdeaRequestBody;
 
-    // Configure openai@3.3.0 with named imports
+    // openai@3.3.0 usage
     const configuration = new Configuration({ apiKey });
     const openaiClient = new OpenAIApi(configuration);
 
-    // Note the new structure for "howToBuild"
+    // Instruct GPT: there's a new "aiPrompt" field at same level as "howToBuild"
     const systemInstruction = `
-You are a helpful business idea generator. The user will give you their skills, interests, budget, risk tolerance, and a preferred business model. Provide a single compelling business idea in the following JSON format:
+You are a helpful business idea generator. The user will give you their skills, interests, budget, risk tolerance, and a preferred business model. Provide a single compelling business idea in valid JSON with these fields:
 
 {
   "name": string,
@@ -53,16 +48,13 @@ You are a helpful business idea generator. The user will give you their skills, 
   "monetization": string,
   "challengesAndRisks": string,
   "whyNow": string,
-  "howToBuild": {
-    "description": string,
-    "aiPrompt": string
-  }
+  "howToBuild": string,
+  "aiPrompt": string
 }
 
-The "howToBuild" field should be an object. 
-- "description" is a general explanation of how to build or implement the idea. 
-- "aiPrompt" is a specialized prompt that a developer can paste into ChatGPT (or another AI) to start coding or implementing the solution. 
-Do not include any fields or text beyond these.
+- "howToBuild": a plain string describing how to build or implement the idea.
+- "aiPrompt": a second plain string containing advanced instructions or a prompt a developer can copy/paste into ChatGPT to start coding. 
+Do not add extra commentary or keys. Only return the JSON object.
     `.trim();
 
     const userPrompt = `
@@ -72,8 +64,7 @@ Budget: ${budget}
 Risk Tolerance: ${riskTolerance}
 Preferred Business Model: ${businessModel}
 
-Generate exactly that JSON. 
-Ensure "howToBuild" is an object with "description" and "aiPrompt".
+Generate a single idea with "howToBuild" and "aiPrompt" as separate string fields.
     `.trim();
 
     const response = await openaiClient.createChatCompletion({
@@ -93,6 +84,7 @@ Ensure "howToBuild" is an object with "description" and "aiPrompt".
     } catch (error) {
       console.error("Failed to parse GPT response:", error);
       console.error("Raw content:", rawText);
+      // Provide fallback with both fields as strings
       return res.status(200).json({
         name: "Error Parsing Idea",
         problem: "Could not parse AI output.",
@@ -103,10 +95,8 @@ Ensure "howToBuild" is an object with "description" and "aiPrompt".
         monetization: "N/A",
         challengesAndRisks: "N/A",
         whyNow: "N/A",
-        howToBuild: {
-          description: "N/A",
-          aiPrompt: "N/A",
-        },
+        howToBuild: "N/A",
+        aiPrompt: "N/A",
       });
     }
 
