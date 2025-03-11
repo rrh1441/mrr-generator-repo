@@ -1,8 +1,5 @@
 import { Configuration, OpenAIApi } from "openai";
 
-/**
- * The shape of data you expect from your front-end form.
- */
 interface BusinessIdeaRequestBody {
   skills: string;
   interests: string;
@@ -18,10 +15,6 @@ interface BusinessIdeaRequestBody {
     | "Other";
 }
 
-/**
- * Vercel serverless function signature:
- * This means it's purely server side, so your OPENAI_API_KEY won't be exposed.
- */
 export default async function handler(req: any, res: any) {
   try {
     // Only allow POST requests
@@ -29,43 +22,51 @@ export default async function handler(req: any, res: any) {
       return res.status(405).json({ error: "Method Not Allowed" });
     }
 
-    // Retrieve your secret OpenAI key from an environment variable
+    // Retrieve the OpenAI API key from environment variables
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return res.status(500).json({ error: "Missing OPENAI_API_KEY" });
     }
 
-    // Parse request body
-    const {
-      skills,
-      interests,
-      budget,
-      riskTolerance,
-      businessModel,
-    } = req.body as BusinessIdeaRequestBody;
+    // Parse the incoming request body
+    const { skills, interests, budget, riskTolerance, businessModel } =
+      req.body as BusinessIdeaRequestBody;
 
-    // Configure openai@3.3.0 (or whichever version you have installed)
+    // Configure OpenAI (openai@3.3.0)
     const configuration = new Configuration({ apiKey });
     const openaiClient = new OpenAIApi(configuration);
 
-    // Build system instructions
+    // Revised system instruction:
+    // • Return exactly one JSON object with the following fields (note that "techStack" is removed):
+    //   - name, problem, solution, targetAudience, businessModel,
+    //     monetization, challengesAndRisks, whyNow, howToBuild, aiPrompt
+    // • "howToBuild" should be a concise, step-by-step approach that includes guidance on project structure,
+    //   initial configuration, key component suggestions, and deployment considerations.
+    // • "aiPrompt" should be a detailed prompt that instructs an AI (like ChatGPT) to provide additional scaffolding or
+    //   concrete code guidance focusing on iterative development, security, testing, performance optimization, and environment configuration.
+    // • Output only valid JSON, with no extra commentary or keys.
     const systemInstruction = `
-You are a helpful business idea generator. Return a single JSON object with:
+You are a highly experienced software architect and business consultant.
+Return exactly one JSON object with these fields:
+
 {
   "name": string,
   "problem": string,
   "solution": string,
   "targetAudience": string,
   "businessModel": string,
-  "techStack": string,
   "monetization": string,
   "challengesAndRisks": string,
   "whyNow": string,
   "howToBuild": string,
   "aiPrompt": string
 }
-The "aiPrompt" must be advanced enough to help the developer start building with best practices.
-No extra keys or commentary.
+
+Constraints:
+1) "howToBuild": Provide a concise, step-by-step approach detailing the recommended implementation strategy, including guidance on project structure, initial configuration, key components, and deployment considerations. Do not include tech stack recommendations.
+2) "aiPrompt": Provide a detailed, best-practices-based prompt for ChatGPT that instructs it to generate additional code scaffolding and concrete implementation advice. Emphasize iterative development, version control, security, performance optimization, testing, and proper environment configuration.
+3) Do not add any extra commentary or fields beyond these.
+Output only a valid JSON object.
     `.trim();
 
     const userPrompt = `
@@ -75,11 +76,10 @@ Budget: ${budget}
 Risk Tolerance: ${riskTolerance}
 Preferred Business Model: ${businessModel}
 
-Generate that JSON, focusing on a thorough "aiPrompt" 
-with security, testing, iterative dev, environment, etc.
+Return a single JSON object with "howToBuild" and "aiPrompt" as separate string fields.
     `.trim();
 
-    // ChatGPT call
+    // Make the request to ChatGPT
     const response = await openaiClient.createChatCompletion({
       model: "gpt-3.5-turbo",
       temperature: 0.7,
@@ -94,16 +94,14 @@ with security, testing, iterative dev, environment, etc.
     try {
       idea = JSON.parse(rawText);
     } catch (error) {
-      // Provide fallback if GPT's JSON fails to parse
       console.error("Failed to parse GPT response:", error);
       console.error("Raw content:", rawText);
       return res.status(200).json({
         name: "Error Parsing Idea",
         problem: "Could not parse AI output.",
-        solution: "N/A",
+        solution: "Check logs for raw JSON string.",
         targetAudience: "N/A",
         businessModel: "N/A",
-        techStack: "N/A",
         monetization: "N/A",
         challengesAndRisks: "N/A",
         whyNow: "N/A",
@@ -112,7 +110,6 @@ with security, testing, iterative dev, environment, etc.
       });
     }
 
-    // Return final structured response
     return res.status(200).json(idea);
   } catch (error) {
     console.error("OpenAI call error:", error);

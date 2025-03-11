@@ -52,7 +52,6 @@ const ResultCard: React.FC<ResultCardProps> = ({ idea, onReset }) => {
       {renderSection("Solution and How It Works", idea.solution)}
       {renderSection("Target Audience", idea.targetAudience)}
       {renderSection("Business Model", idea.businessModel)}
-      {renderSection("Tech Stack Recommendation", idea.techStack)}
       {renderSection("Monetization Strategy", idea.monetization)}
       {renderSection("Challenges and Risks", idea.challengesAndRisks)}
       {renderSection("Why Now", idea.whyNow)}
