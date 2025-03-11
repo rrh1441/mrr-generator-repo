@@ -32,11 +32,11 @@ export default async function handler(req: any, res: any) {
     const { skills, interests, budget, riskTolerance, businessModel } =
       req.body as BusinessIdeaRequestBody;
 
-    // Configure OpenAI (openai@3.3.0)
+    // Configure OpenAI (using openai@3.3.0)
     const configuration = new Configuration({ apiKey });
     const openaiClient = new OpenAIApi(configuration);
 
-    // Define system instruction that includes clear guidance for the "aiPrompt" field.
+    // Define system instruction with concrete guidance for both fields.
     const systemInstruction = `
 You are an expert software architect and business consultant.
 Return exactly one JSON object with these fields:
@@ -55,8 +55,8 @@ Return exactly one JSON object with these fields:
 }
 
 Constraints:
-1) "howToBuild": Provide a concise, step-by-step guide outlining the recommended implementation strategy. This should include suggestions for project structure, initial configuration, and deployment considerations.
-2) "aiPrompt": Generate a detailed prompt that a developer can copy and paste into an LLM (like ChatGPT) to receive further code scaffolding and project setup instructions. This prompt must include concrete guidance on setting up version control, configuring environment variables, applying security best practices, writing tests, and planning for iterative development.
+1) "howToBuild": Provide a concise, step-by-step guide outlining the recommended implementation strategy. Include suggestions for project structure, configuration, and deployment considerations.
+2) "aiPrompt": Generate a detailed prompt that a developer can copy and paste into an LLM (such as ChatGPT) to receive further code scaffolding and project setup instructions. This prompt must include concrete guidance on setting up version control, configuring environment variables, applying security best practices, writing tests, and planning for iterative development.
 3) Do not include any extra fields or commentary—output only a valid JSON object.
     `.trim();
 
@@ -67,7 +67,7 @@ Budget: ${budget}
 Risk Tolerance: ${riskTolerance}
 Preferred Business Model: ${businessModel}
 
-Return a single JSON object with "howToBuild" and "aiPrompt" as separate string fields as described above.
+Return a single JSON object with "howToBuild" and "aiPrompt" as separate string fields, following the instructions above.
     `.trim();
 
     // Call ChatGPT
@@ -80,6 +80,7 @@ Return a single JSON object with "howToBuild" and "aiPrompt" as separate string 
       ],
     });
 
+    // Extract the text from the completion
     const rawText = response.data.choices?.[0]?.message?.content?.trim() || "";
     let idea;
     try {
