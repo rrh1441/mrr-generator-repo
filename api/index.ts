@@ -35,13 +35,14 @@ export default async function handler(req: any, res: any) {
       businessModel,
     } = req.body as BusinessIdeaRequestBody;
 
-    // Configure OpenAI (works in openai@3.3.0)
+    // Configure openai@3.3.0 with named imports
     const configuration = new Configuration({ apiKey });
     const openaiClient = new OpenAIApi(configuration);
 
-    // Add an "aiPrompt" field to the JSON spec:
+    // Note the new structure for "howToBuild"
     const systemInstruction = `
-You are a helpful business idea generator. The user will give you their skills, interests, budget, risk tolerance, and a preferred business model. Provide a single compelling business idea that includes these fields in JSON:
+You are a helpful business idea generator. The user will give you their skills, interests, budget, risk tolerance, and a preferred business model. Provide a single compelling business idea in the following JSON format:
+
 {
   "name": string,
   "problem": string,
@@ -52,10 +53,16 @@ You are a helpful business idea generator. The user will give you their skills, 
   "monetization": string,
   "challengesAndRisks": string,
   "whyNow": string,
-  "howToBuild": string,
-  "aiPrompt": string
+  "howToBuild": {
+    "description": string,
+    "aiPrompt": string
+  }
 }
-Only respond with valid JSON, no extra commentary or keys.
+
+The "howToBuild" field should be an object. 
+- "description" is a general explanation of how to build or implement the idea. 
+- "aiPrompt" is a specialized prompt that a developer can paste into ChatGPT (or another AI) to start coding or implementing the solution. 
+Do not include any fields or text beyond these.
     `.trim();
 
     const userPrompt = `
@@ -65,7 +72,8 @@ Budget: ${budget}
 Risk Tolerance: ${riskTolerance}
 Preferred Business Model: ${businessModel}
 
-Generate a single idea that fits these constraints.
+Generate exactly that JSON. 
+Ensure "howToBuild" is an object with "description" and "aiPrompt".
     `.trim();
 
     const response = await openaiClient.createChatCompletion({
@@ -95,8 +103,10 @@ Generate a single idea that fits these constraints.
         monetization: "N/A",
         challengesAndRisks: "N/A",
         whyNow: "N/A",
-        howToBuild: "N/A",
-        aiPrompt: "N/A",
+        howToBuild: {
+          description: "N/A",
+          aiPrompt: "N/A",
+        },
       });
     }
 
