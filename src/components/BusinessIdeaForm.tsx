@@ -102,7 +102,7 @@ const BusinessIdeaForm: React.FC = () => {
             value={formData.budget}
             onChange={handleChange}
             className="form-input"
-            placeholder="$5,000, $10,000, $50,000, etc."
+            placeholder="$100, $1,000, $5,000, etc."
             required
           />
         </div>

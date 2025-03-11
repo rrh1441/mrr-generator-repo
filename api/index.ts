@@ -1,9 +1,5 @@
 import { Configuration, OpenAIApi } from "openai";
 
-/**
- * Interface describing the shape of data you expect from the client.
- * This matches your form fields in the React code.
- */
 interface BusinessIdeaRequestBody {
   skills: string;
   interests: string;
@@ -26,13 +22,11 @@ export default async function handler(req: any, res: any) {
       return res.status(405).json({ error: "Method Not Allowed" });
     }
 
-    // Retrieve the OpenAI key from environment variables.
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return res.status(500).json({ error: "Missing OPENAI_API_KEY" });
     }
 
-    // Parse input data from request body
     const {
       skills,
       interests,
@@ -45,7 +39,7 @@ export default async function handler(req: any, res: any) {
     const configuration = new Configuration({ apiKey });
     const openaiClient = new OpenAIApi(configuration);
 
-    // Construct the system instruction and user prompt
+    // Add an "aiPrompt" field to the JSON spec:
     const systemInstruction = `
 You are a helpful business idea generator. The user will give you their skills, interests, budget, risk tolerance, and a preferred business model. Provide a single compelling business idea that includes these fields in JSON:
 {
@@ -58,7 +52,8 @@ You are a helpful business idea generator. The user will give you their skills, 
   "monetization": string,
   "challengesAndRisks": string,
   "whyNow": string,
-  "howToBuild": string
+  "howToBuild": string,
+  "aiPrompt": string
 }
 Only respond with valid JSON, no extra commentary or keys.
     `.trim();
@@ -73,7 +68,6 @@ Preferred Business Model: ${businessModel}
 Generate a single idea that fits these constraints.
     `.trim();
 
-    // Make the request to ChatGPT
     const response = await openaiClient.createChatCompletion({
       model: "gpt-3.5-turbo",
       temperature: 0.7,
@@ -83,10 +77,8 @@ Generate a single idea that fits these constraints.
       ],
     });
 
-    // Extract text from the completion
     const rawText = response.data.choices?.[0]?.message?.content?.trim() || "";
 
-    // Attempt to parse the JSON
     let idea;
     try {
       idea = JSON.parse(rawText);
@@ -104,10 +96,10 @@ Generate a single idea that fits these constraints.
         challengesAndRisks: "N/A",
         whyNow: "N/A",
         howToBuild: "N/A",
+        aiPrompt: "N/A",
       });
     }
 
-    // Return the parsed idea
     return res.status(200).json(idea);
   } catch (error) {
     console.error("OpenAI call error:", error);

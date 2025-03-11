@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 const BusinessIdeaHeader: React.FC = () => {
@@ -11,8 +10,7 @@ const BusinessIdeaHeader: React.FC = () => {
         Find Your Perfect Business Idea
       </h1>
       <p className="text-muted-foreground max-w-2xl mx-auto">
-        Enter your skills, interests, and preferences below to discover tailored startup ideas 
-        with revenue potential that match your unique profile.
+        A free tool to actually help you start making money online
       </p>
     </header>
   );
