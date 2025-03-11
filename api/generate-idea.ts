@@ -36,7 +36,7 @@ export default async function handler(req: any, res: any) {
     const configuration = new Configuration({ apiKey });
     const openaiClient = new OpenAIApi(configuration);
 
-    // Define system instruction with concrete guidance for both fields.
+    // Define system instruction with detailed guidance for generating the "aiPrompt"
     const systemInstruction = `
 You are an expert software architect and business consultant.
 Return exactly one JSON object with these fields:
@@ -55,8 +55,14 @@ Return exactly one JSON object with these fields:
 }
 
 Constraints:
-1) "howToBuild": Provide a concise, step-by-step guide outlining the recommended implementation strategy. Include suggestions for project structure, configuration, and deployment considerations.
-2) "aiPrompt": Generate a detailed prompt that a developer can copy and paste into an LLM (such as ChatGPT) to receive further code scaffolding and project setup instructions. This prompt must include concrete guidance on setting up version control, configuring environment variables, applying security best practices, writing tests, and planning for iterative development.
+1) "howToBuild": Provide a concise, step-by-step guide outlining the recommended implementation strategy. Include suggestions for project structure, dependency management, and deployment considerations.
+2) "aiPrompt": Generate a detailed, actionable prompt that a developer can copy and paste into an LLM (such as ChatGPT) to receive further code scaffolding and project setup instructions. Your prompt must include concrete guidance, for example:
+   - "Set up a Django project with built-in user authentication."
+   - "Create models for tracking emissions data and user goals."
+   - "Implement algorithms to calculate carbon footprint based on user inputs."
+   - "Develop a recommendation system using machine learning to suggest sustainability actions."
+   - "Write end-to-end tests to ensure accurate tracking and recommendations."
+   - Also, mention best practices for version control, configuring environment variables, security measures, and iterative development.
 3) Do not include any extra fields or commentary—output only a valid JSON object.
     `.trim();
 
