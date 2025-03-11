@@ -1,7 +1,4 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import openai from "openai";
-
-const { Configuration, OpenAIApi } = openai;
+import { Configuration, OpenAIApi } from "openai";
 
 /**
  * Interface describing the shape of data you expect from the client.
@@ -22,7 +19,7 @@ interface BusinessIdeaRequestBody {
     | "Other";
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
   try {
     // Only allow POST
     if (req.method !== "POST") {
@@ -35,7 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: "Missing OPENAI_API_KEY" });
     }
 
-    // Parse input data from request body, ensuring TypeScript checks shape.
+    // Parse input data from request body
     const {
       skills,
       interests,
@@ -44,7 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       businessModel,
     } = req.body as BusinessIdeaRequestBody;
 
-    // Configure OpenAI
+    // Configure OpenAI (works in openai@3.3.0)
     const configuration = new Configuration({ apiKey });
     const openaiClient = new OpenAIApi(configuration);
 
