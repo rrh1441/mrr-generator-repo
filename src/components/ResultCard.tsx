@@ -17,29 +17,32 @@ interface BusinessIdeaRequestBody {
 
 export default async function handler(req: any, res: any) {
   try {
+    // Only allow POST
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Method Not Allowed" });
     }
 
+    // Retrieve the OpenAI key from environment variables
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return res.status(500).json({ error: "Missing OPENAI_API_KEY" });
     }
 
+    // Destructure form data
     const { skills, interests, budget, riskTolerance, businessModel } =
       req.body as BusinessIdeaRequestBody;
 
-    // Using openai@3.3.0 with named imports
+    // Configure openai@3.3.0 with named imports
     const configuration = new Configuration({ apiKey });
     const openaiClient = new OpenAIApi(configuration);
 
     /**
-     * Revised instructions for "aiPrompt" to incorporate best practices
+     * Revised system instruction: produce "howToBuild" and "aiPrompt" as separate strings.
+     * "aiPrompt" must reflect best practices for iterative dev, security, testing, etc.
      */
     const systemInstruction = `
 You are a highly experienced software architect and business consultant. 
-The user will provide their skills, interests, budget, risk tolerance, and preferred business model. 
-Return a single JSON with these fields:
+Return exactly one JSON object with these fields:
 
 {
   "name": string,
@@ -55,14 +58,13 @@ Return a single JSON with these fields:
   "aiPrompt": string
 }
 
-- "aiPrompt" must be a high-quality, advanced prompt that a developer can copy/paste into ChatGPT or other AI to start building the recommended project. 
-  1. It should include a short summary of the business idea context. 
-  2. It should incorporate best practices (e.g., iterative dev approach, recommended frameworks/libraries, environment variables, version control). 
-  3. It should emphasize security, testing, and performance considerations. 
-  4. It must be concise but cover recommended next steps, possible feature expansions, and relevant code or architecture patterns. 
-  5. Avoid extraneous commentary. Output only the JSON—no additional text.
-
-Do not add extra fields or commentary beyond the specified JSON keys.
+Constraints:
+1) "howToBuild": a concise string describing the recommended approach, libraries, environment setup, etc.
+2) "aiPrompt": a best-practice-based advanced prompt for ChatGPT or other AI. 
+   - Emphasize an iterative dev approach, version control, environment variables, security, performance, testing, etc.
+   - Provide just enough detail to help a developer jumpstart coding. 
+3) Do not add extra fields or commentary beyond these. 
+4) Output only valid JSON in the final message, no additional text.
     `.trim();
 
     const userPrompt = `
@@ -72,10 +74,11 @@ Budget: ${budget}
 Risk Tolerance: ${riskTolerance}
 Preferred Business Model: ${businessModel}
 
-Generate exactly the JSON described. 
-Focus on providing a truly useful "aiPrompt" for developers to start building. 
+Return a single JSON object with "howToBuild" and "aiPrompt" as separate string fields. 
+They must incorporate strong best practices for building the recommended project.
     `.trim();
 
+    // Make the request to ChatGPT
     const response = await openaiClient.createChatCompletion({
       model: "gpt-3.5-turbo",
       temperature: 0.7,
@@ -85,6 +88,7 @@ Focus on providing a truly useful "aiPrompt" for developers to start building.
       ],
     });
 
+    // Grab the text from the completion
     const rawText = response.data.choices?.[0]?.message?.content?.trim() || "";
 
     let idea;
@@ -93,6 +97,7 @@ Focus on providing a truly useful "aiPrompt" for developers to start building.
     } catch (error) {
       console.error("Failed to parse GPT response:", error);
       console.error("Raw content:", rawText);
+      // If JSON parse fails, provide fallback
       return res.status(200).json({
         name: "Error Parsing Idea",
         problem: "Could not parse AI output.",
@@ -108,6 +113,7 @@ Focus on providing a truly useful "aiPrompt" for developers to start building.
       });
     }
 
+    // Return the final structured idea
     return res.status(200).json(idea);
   } catch (error) {
     console.error("OpenAI call error:", error);
